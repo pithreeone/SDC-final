@@ -15,19 +15,20 @@ json_objects = data.strip().split('\n')
 # Parse each JSON object
 parsed_data = [json.loads(obj) for obj in json_objects]
 
-# Now you can work with the parsed data
-# for item in parsed_data:
-#     print(item)
-
-
 # Assuming parsed_data is your list of dictionaries from the JSON
-iterations = [item['iteration'] for item in parsed_data]
-loss_cls_values = [item['loss_rpn_cls'] for item in parsed_data]
+# Record information: "data_time", "eta_seconds", "fast_rcnn/cls_accuracy", "fast_rcnn/false_negative", "fast_rcnn/fg_cls_accuracy", 
+# "iteration", "loss_box_reg", "loss_cls", "loss_rpn_cls", "loss_rpn_loc", "lr", "roi_head/num_bg_samples", "roi_head/num_fg_samples",
+# "rpn/num_neg_anchors", "rpn/num_pos_anchors", "time", "total_loss"}
+
+x_label = 'iteration'
+y_label = 'total_loss'
+x = [item[x_label] for item in parsed_data]
+y = [item[y_label] for item in parsed_data]
 
 # Plotting
-plt.plot(iterations, loss_cls_values, marker='o')
-plt.title('Iteration vs data_time')
-plt.xlabel('Iteration')
-plt.ylabel('data_time')
+plt.plot(x, y, marker='o')
+plt.title(x_label + ' vs ' + y_label)
+plt.xlabel(x_label)
+plt.ylabel(y_label)
 plt.grid(True)
 plt.show()
