@@ -27,11 +27,11 @@ parser.add_argument("--model_name", help="Model Name (Ex: faster_rcnn_R_50_FPN_3
                     type=str)
 
 parser.add_argument("--root_folder", help="root folder with radiate dataset",
-                default='/data/data/RADIATE/',
+                default='/home/pithreeone/SDC-Repo/2023_final/data/mini_train',
                     type=str)
 
 parser.add_argument("--max_iter", help="Maximum number of iterations",
-                    default=90000,
+                    default=500,
                     type=int)
 
 parser.add_argument("--resume", help="Whether to resume training or not",
@@ -39,7 +39,7 @@ parser.add_argument("--resume", help="Whether to resume training or not",
                     type=bool)
 
 parser.add_argument("--dataset_mode", help="dataset mode ('good_weather', 'good_and_bad_weather')",
-                    default='good_weather',
+                    default='good_and_bad_weather',
                     type=str)
 
 # parse arguments
@@ -127,10 +127,27 @@ def train(model_name, root_dir, dataset_mode, max_iter):
                     if (object['bboxes'][frame_number]):
                         class_obj = object['class_name']
 
-
-                        ### Student implement ###
+                        if class_obj == 'group_of_pedestrians' or class_obj == 'pedestrian':
+                            continue
+                        
+                        # ## Student implement ###
                         # TODO
+                        # print(len(annotation))
+                        # bbox = object['bboxes'][frame_number]
+                        # print(object['bboxes'][frame_number])
+                        # # Extract bounding box coordinates and convert them to Detectron2 format
+                        bbox_np = object['bboxes'][frame_number]['position']
+                        bbox_detectron2 = gen_boundingbox(bbox_np, object['bboxes'][frame_number]['rotation'])  # You may need to adjust the angle parameter
 
+                        # # Add the object to the list
+                        objs.append({
+                            "bbox": bbox_detectron2,
+                            "bbox_mode": BoxMode.XYXY_ABS,  # Assuming bounding box format is XYXY
+                            "category_id": 0  # Only one class ('vehicle') is assumed
+                        })
+
+                        # # Set bb_created to True to indicate that at least one bounding box is created for this frame
+                        bb_created = True
                         
                 if bb_created:
                     record["annotations"] = objs
@@ -159,7 +176,8 @@ def train(model_name, root_dir, dataset_mode, max_iter):
     cfg.SOLVER.STEPS: (25000, 35000)
     cfg.SOLVER.MAX_ITER = max_iter
     cfg.SOLVER.BASE_LR = 0.00025
-    cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128
+    cfg.MODEL.DEVICE = 'cpu'
+    cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 32
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
     cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.2
     cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64, 128]]
