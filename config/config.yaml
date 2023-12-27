@@ -7,7 +7,7 @@ camera_timestamp_file: 'zed_left.txt'
 use_camera_left_raw: False
 use_camera_right_raw: False
 use_camera_left_rect: False
-use_camera_right_rect: False
+use_camera_right_rect: True
 use_radar_polar: False
 use_radar_cartesian: True
 use_lidar_pc: False
@@ -57,7 +57,7 @@ radar_calib:
     range_cells: 576
     azimuth_cells: 400
 
-calib_file: '/home/xxxxxxxx/2023_final/config/default-calib.yaml'
+calib_file: '/home/pithreeone/SDC-Repo/2023_final/config/default-calib.yaml'
 
 
     
