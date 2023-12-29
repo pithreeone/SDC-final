@@ -277,7 +277,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    gt_file = 'Ground_Truth_File_Path/xxxx.json'
+    gt_file = '/home/pithreeone/SDC-Repo/2023_final/data/mini_test/city_7_0/gt_city_7_0.json'
     pred_file = 'Your_Prediction_Result_File_Path/xxxx.json'
 
     gt = []
