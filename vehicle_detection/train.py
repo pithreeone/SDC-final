@@ -18,12 +18,12 @@ from detectron2.structures import BoxMode
 from detectron2.evaluation import (
     COCOEvaluator,
     RotatedCOCOEvaluator)
-
+import torch
 
 # init params
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name", help="Model Name (Ex: faster_rcnn_R_50_FPN_3x)",
-                    default='faster_rcnn_R_50_FPN_3x',
+                    default='faster_rcnn_R_101_FPN_3x',
                     type=str)
 
 parser.add_argument("--root_folder", help="root folder with radiate dataset",
@@ -31,7 +31,7 @@ parser.add_argument("--root_folder", help="root folder with radiate dataset",
                     type=str)
 
 parser.add_argument("--max_iter", help="Maximum number of iterations",
-                    default=500,
+                    default=6000,
                     type=int)
 
 parser.add_argument("--resume", help="Whether to resume training or not",
@@ -166,21 +166,25 @@ def train(model_name, root_dir, dataset_mode, max_iter):
     MetadataCatalog.get(dataset_test_name).set(thing_classes=["vehicle"])
 
     cfg_file = os.path.join('test', 'config', model_name + '.yaml')
+    
+    torch.cuda.empty_cache()
     cfg = get_cfg()
     cfg.OUTPUT_DIR = output_dir
     cfg.merge_from_file(cfg_file)
     cfg.DATASETS.TRAIN = (dataset_train_name,)
     cfg.DATASETS.TEST = (dataset_test_name,)
     cfg.DATALOADER.NUM_WORKERS = 2
-    cfg.SOLVER.IMS_PER_BATCH = 2
-    cfg.SOLVER.STEPS: (25000, 35000)
+    cfg.SOLVER.IMS_PER_BATCH = 1
+    cfg.SOLVER.STEPS = (1000, 3000)
     cfg.SOLVER.MAX_ITER = max_iter
-    cfg.SOLVER.BASE_LR = 0.00025
-    cfg.MODEL.DEVICE = 'cpu'
+    cfg.SOLVER.BASE_LR = 0.0025
+    cfg.SOLVER.MOMENTUM = 0.5
+    cfg.SOLVER.GAMMA = 0.1
+    cfg.MODEL.DEVICE = 'cuda'
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 32
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
     cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.2
-    cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64, 128]]
+    cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64]]
 
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     if cfg.MODEL.PROPOSAL_GENERATOR.NAME == "RRPN":

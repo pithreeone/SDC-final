@@ -1,7 +1,7 @@
 import json
 
 # File path of the JSON file
-file_path = "/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output.json"
+file_path = "/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output_city_7_0.json"
 
 # Read data from the JSON file
 with open(file_path, 'r') as json_file:

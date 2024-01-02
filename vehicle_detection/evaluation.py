@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
     gt_file = '/home/pithreeone/SDC-Repo/2023_final/data/mini_test/city_7_0/gt_city_7_0.json'
     # pred_file = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/new_gt.json'
-    pred_file = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output_new.json'
+    pred_file = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output_test_9.json'
 
     gt = []
     predictions = []
