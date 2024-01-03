@@ -11,16 +11,22 @@ image_files = [f for f in os.listdir(image_folder_path)]
 image_files.sort()
 
 
-predict_path = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output_comp_3.json'
+predict_path = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output_comp_3_filter.json'
+predict2_path = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/output_comp_3.json'
 
 # Read data from the JSON file
 with open(predict_path, 'r') as json_file:
     data_predict = json.load(json_file)
 
+with open(predict2_path, 'r') as json_file:
+    data_predict2 = json.load(json_file)
+
 id_predict = 0
+id_predict2 = 0
 
 # for image_file in image_files:
 for i in range(len(image_files)):
+    print(i)
     image_file = image_files[i]
     # Construct the full path to the image file
     image_path = os.path.join(image_folder_path, image_file)
@@ -44,6 +50,23 @@ for i in range(len(image_files)):
 
         # Draw bounding box on the image (for visualization purposes)
         cv2.rectangle(img, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 0, 0), 2)
+ 
+    # prediction bounding box
+    for id_predict2 in range(id_predict2, len(data_predict2)):
+        sample_token = int(data_predict2[id_predict2]['sample_token'])
+        
+        if sample_token < i+1:
+            id_predict2 += 1
+            break
+        elif sample_token > i+1:
+            break
+        
+        x_min, y_min = data_predict2[id_predict2]['points'][1]
+        x_max, y_max = data_predict2[id_predict2]['points'][3]
+        id_predict2 += 1
+
+        # Draw bounding box on the image (for visualization purposes)
+        cv2.rectangle(img, (int(x_min + 5), int(y_min + 5)), (int(x_max + 5), int(y_max + 5)), (0, 255, 0), 2)
 
         
     cv2.imshow("Prediction", img)
