@@ -18,7 +18,11 @@ from detectron2.structures import BoxMode
 from detectron2.evaluation import (
     COCOEvaluator,
     RotatedCOCOEvaluator)
+from detectron2.data import build_detection_train_loader
+from detectron2.data import DatasetMapper
+from detectron2.data import transforms as T
 import torch
+import cv2
 
 # init params
 parser = argparse.ArgumentParser()
@@ -31,7 +35,7 @@ parser.add_argument("--root_folder", help="root folder with radiate dataset",
                     type=str)
 
 parser.add_argument("--max_iter", help="Maximum number of iterations",
-                    default=6000,
+                    default=2500,
                     type=int)
 
 parser.add_argument("--resume", help="Whether to resume training or not",
@@ -50,6 +54,36 @@ resume = args.resume
 dataset_mode = args.dataset_mode
 max_iter = args.max_iter
 
+class MyTrainer(DefaultTrainer):
+
+    @classmethod
+    def build_train_loader(cls, cfg):
+        mapper = DatasetMapper(cfg, is_train=True, augmentations=[
+                                                                #   T.RandomFlip(),
+                                                                  T.RandomCrop("absolute", (700, 700)),
+                                                                  T.RandomRotation(angle = [-45, 45]),
+                                                                  T.RandomBrightness(0.7, 1.3),  # Adjust brightness during testing
+                                                                  GaussianBlurTransform(blur_prob=0.3),  # Adjust blur_prob as needed
+                                                                  ])
+        return build_detection_train_loader(cfg, mapper=mapper)
+
+class GaussianBlurTransform(T.Transform):
+    def __init__(self, blur_prob=0.5):
+        self.blur_prob = blur_prob
+
+    def apply_image(self, img):
+        if np.random.rand() < self.blur_prob:
+            img = cv2.GaussianBlur(img, (5, 5), 0)
+        return img
+
+    def apply_coords(self, coords):
+        return coords
+
+    def inverse(self):
+        raise NotImplementedError("GaussianBlurTransform is not invertible")
+
+    def apply_segmentation(self, segmentation):
+        return segmentation
 
 def train(model_name, root_dir, dataset_mode, max_iter):
 
@@ -175,22 +209,23 @@ def train(model_name, root_dir, dataset_mode, max_iter):
     cfg.DATASETS.TEST = (dataset_test_name,)
     cfg.DATALOADER.NUM_WORKERS = 2
     cfg.SOLVER.IMS_PER_BATCH = 1
-    cfg.SOLVER.STEPS = (1000, 3000)
+    # cfg.SOLVER.STEPS = (7000)
     cfg.SOLVER.MAX_ITER = max_iter
-    cfg.SOLVER.BASE_LR = 0.0025
-    cfg.SOLVER.MOMENTUM = 0.5
-    cfg.SOLVER.GAMMA = 0.1
+    cfg.SOLVER.BASE_LR = 0.0001
+    # cfg.SOLVER.MOMENTUM = 0.5
+    cfg.SOLVER.GAMMA = 0.5
     cfg.MODEL.DEVICE = 'cuda'
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 32
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
     cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.2
-    cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64]]
+    cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64, 128]]
 
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     if cfg.MODEL.PROPOSAL_GENERATOR.NAME == "RRPN":
         trainer = RotatedTrainer(cfg)
     else:
-        trainer = Trainer(cfg)
+        # trainer = Trainer(cfg)
+        trainer = MyTrainer(cfg)
 
     trainer.resume_or_load(resume=resume)
     trainer.train()

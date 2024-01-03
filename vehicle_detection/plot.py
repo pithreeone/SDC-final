@@ -2,7 +2,7 @@ import json
 import matplotlib.pyplot as plt
 
 # Specify the path to your JSON file
-json_file_path = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_101_FPN_3x_good_and_bad_weather/metric6.json'
+json_file_path = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_101_FPN_3x_good_and_bad_weather/metrics_6.json'
 
 # Read the JSON file
 with open(json_file_path, 'r') as file:

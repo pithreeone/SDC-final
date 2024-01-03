@@ -34,12 +34,12 @@ cfg = get_cfg()
 # add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
 cfg.merge_from_file(os.path.join('test','config' , network + '.yaml'))
 cfg.MODEL.DEVICE = 'cuda'
-cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_101_FPN_3x_good_and_bad_weather/model_3.pth'
+cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_101_FPN_3x_good_and_bad_weather/model_9.pth'
 # cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/weights/faster_rcnn_R_101_FPN_3x_good_and_bad_weather_radar.pth'
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (vehicle)
 cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.2
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
-cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64, 128]]
+cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64]]
 cfg.TEST.BATCH_SIZE_PER_IMAGE = 1  # or any other desired batch size
 cfg.DATALOADER.NUM_WORKERS = 1  # or any other desired number of workers
 
@@ -51,7 +51,7 @@ image_files = [f for f in os.listdir(image_folder_path)]
 image_files.sort()
 # print(image_files)
 
-file_path = "output_comp_3.json"
+file_path = "output_comp_9.json"
 data = []
 
 # for image_file in image_files:

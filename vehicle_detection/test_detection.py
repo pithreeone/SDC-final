@@ -37,12 +37,12 @@ cfg = get_cfg()
 # add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
 cfg.merge_from_file(os.path.join('test','config' , network + '.yaml'))
 cfg.MODEL.DEVICE = 'cpu'
-cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_50_FPN_3x_good_and_bad_weather/model_final.pth'
+cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_101_FPN_3x_good_and_bad_weather/model_7.pth'
 # cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/weights/faster_rcnn_R_50_FPN_3x_good_and_bad_weather_radar.pth'
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (vehicle)
 cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.2
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.65
-cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64, 128]]
+cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64]]
 predictor = DefaultPredictor(cfg)
 
 for t in np.arange(seq.init_timestamp, seq.end_timestamp, dt):
