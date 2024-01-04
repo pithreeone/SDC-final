@@ -31,11 +31,11 @@ parser.add_argument("--model_name", help="Model Name (Ex: faster_rcnn_R_50_FPN_3
                     type=str)
 
 parser.add_argument("--root_folder", help="root folder with radiate dataset",
-                default='/home/pithreeone/SDC-Repo/2023_final/data/mini_train',
+                default='/home/pithreeone/SDC-Repo/2023_final/data/Bonus_train',
                     type=str)
 
 parser.add_argument("--max_iter", help="Maximum number of iterations",
-                    default=2500,
+                    default=1000,
                     type=int)
 
 parser.add_argument("--resume", help="Whether to resume training or not",
@@ -60,10 +60,10 @@ class MyTrainer(DefaultTrainer):
     def build_train_loader(cls, cfg):
         mapper = DatasetMapper(cfg, is_train=True, augmentations=[
                                                                 #   T.RandomFlip(),
-                                                                  T.RandomCrop("absolute", (700, 700)),
-                                                                  T.RandomRotation(angle = [-45, 45]),
-                                                                  T.RandomBrightness(0.7, 1.3),  # Adjust brightness during testing
-                                                                  GaussianBlurTransform(blur_prob=0.3),  # Adjust blur_prob as needed
+                                                                #   T.RandomCrop("absolute", (700, 700)),
+                                                                #   T.RandomRotation(angle = [-45, 45]),
+                                                                #   T.RandomBrightness(0.7, 1.3),  # Adjust brightness during testing
+                                                                #   GaussianBlurTransform(blur_prob=0.3),  # Adjust blur_prob as needed
                                                                   ])
         return build_detection_train_loader(cfg, mapper=mapper)
 
@@ -92,17 +92,17 @@ def train(model_name, root_dir, dataset_mode, max_iter):
     os.makedirs(output_dir, exist_ok=True)
 
     # get folders depending on dataset_mode
-    folders_train = []
-    folders_test = []
-    for curr_dir in os.listdir(root_dir):
-        with open(os.path.join(root_dir, curr_dir, 'meta.json')) as f:
-            meta = json.load(f)
-        if meta["set"] == "train_good_weather":
-            folders_train.append(curr_dir)
-        elif meta["set"] == "train_good_and_bad_weather" and dataset_mode == "good_and_bad_weather":
-            folders_train.append(curr_dir)
-        elif meta["set"] == "test":
-            folders_test.append(curr_dir)
+    # folders_train = []
+    # folders_test = []
+    # for curr_dir in os.listdir(root_dir):
+    #     with open(os.path.join(root_dir, curr_dir, 'meta.json')) as f:
+    #         meta = json.load(f)
+    #     if meta["set"] == "train_good_weather":
+    #         folders_train.append(curr_dir)
+    #     elif meta["set"] == "train_good_and_bad_weather" and dataset_mode == "good_and_bad_weather":
+    #         folders_train.append(curr_dir)
+    #     elif meta["set"] == "test":
+    #         folders_test.append(curr_dir)
 
     def gen_boundingbox(bbox, angle):
         theta = np.deg2rad(-angle)
@@ -128,76 +128,131 @@ def train(model_name, root_dir, dataset_mode, max_iter):
 
         return min_x, min_y, max_x, max_y
 
-    def get_radar_dicts(folders):
+    def get_radar_dicts():
         dataset_dicts = []
         idd = 0
-        folder_size = len(folders)
-        for folder in folders:
-            radar_folder = os.path.join(root_dir, folder, 'Navtech_Cartesian')
-            annotation_path = os.path.join(root_dir,
-                                           folder, 'annotations', 'annotations.json')
-            with open(annotation_path, 'r') as f_annotation:
-                annotation = json.load(f_annotation)
+        # folder_size = len(folders)
 
-            radar_files = os.listdir(radar_folder)
-            radar_files.sort()
-            for frame_number in range(len(radar_files)):
+        # for folder in folders:
+        radar_folder = os.path.join(root_dir, 'Navtech_Cartesian')
+        annotation_path = os.path.join(root_dir, 'annotations', 'annotations.json')
+        with open(annotation_path, 'r') as f_annotation:
+            annotation = json.load(f_annotation)
+
+        radar_files = os.listdir(radar_folder)
+        radar_files.sort()
+
+        
+        old_image_id = 0
+
+        record = {}
+        objs = []
+        for object in annotation['annotations']:
+            idd += 1
+
+            
+            image_id = object['image_id']
+            if old_image_id != image_id:
+                old_image_id = image_id
+                record["annotations"] = objs
+                dataset_dicts.append(record)
                 record = {}
                 objs = []
-                bb_created = False
-                idd += 1
-                filename = os.path.join(
-                    radar_folder, radar_files[frame_number])
 
-                if (not os.path.isfile(filename)):
-                    print(filename)
-                    continue
-                record["file_name"] = filename
-                record["image_id"] = idd
-                record["height"] = 1152
-                record["width"] = 1152
+            # find the image name
+            for image in annotation['images']:
+                if (int(image['id']) == image_id):
+                    file_name = image['file_name']
+                    filename = os.path.join(radar_folder, file_name)
+                    record["file_name"] = filename
+                    record["image_id"] = image_id
+                    break
+            
+            record["height"] = 1600
+            record["width"] = 1600
+            
+            class_id = object['category_id']
+            bbox = object['bbox']
+            angle = object['angle']
+            bbox_detectron2 = gen_boundingbox(bbox, angle)  # You may need to adjust the angle parameter
 
-                for object in annotation:
-                    if (object['bboxes'][frame_number]):
-                        class_obj = object['class_name']
+            # # Add the object to the list
 
-                        if class_obj == 'group_of_pedestrians' or class_obj == 'pedestrian':
-                            continue
-                        
-                        # ## Student implement ###
-                        # TODO
-                        # print(len(annotation))
-                        # bbox = object['bboxes'][frame_number]
-                        # print(object['bboxes'][frame_number])
-                        # # Extract bounding box coordinates and convert them to Detectron2 format
-                        bbox_np = object['bboxes'][frame_number]['position']
-                        bbox_detectron2 = gen_boundingbox(bbox_np, object['bboxes'][frame_number]['rotation'])  # You may need to adjust the angle parameter
+            objs.append({
+                "bbox": bbox_detectron2,
+                "bbox_mode": BoxMode.XYXY_ABS,  # Assuming bounding box format is XYXY
+                "category_id": class_id  # Only one class ('vehicle') is assumed
+            })
 
-                        # # Add the object to the list
-                        objs.append({
-                            "bbox": bbox_detectron2,
-                            "bbox_mode": BoxMode.XYXY_ABS,  # Assuming bounding box format is XYXY
-                            "category_id": 0  # Only one class ('vehicle') is assumed
-                        })
+        record["annotations"] = objs
+        dataset_dicts.append(record)
 
-                        # # Set bb_created to True to indicate that at least one bounding box is created for this frame
-                        bb_created = True
-                        
-                if bb_created:
-                    record["annotations"] = objs
-                    dataset_dicts.append(record)
+            
+
         return dataset_dicts
 
-    dataset_train_name = dataset_mode + '_train'
-    dataset_test_name = dataset_mode + '_test'
+
+
+        # for frame_number in range(len(radar_files)):
+        #     record = {}
+        #     objs = []
+        #     bb_created = False
+        #     idd += 1
+        #     filename = os.path.join(radar_folder, radar_files[frame_number])
+
+        #     if (not os.path.isfile(filename)):
+        #         print(filename)
+        #         continue
+        #     record["file_name"] = filename
+        #     record["image_id"] = idd
+        #     record["height"] = 1152
+        #     record["width"] = 1152
+
+        #     for object in annotation['annotations']:
+                
+
+
+        #         if (object['bboxes'][frame_number]):
+        #             class_obj = object['class_name']
+
+        #             if class_obj == 'group_of_pedestrians' or class_obj == 'pedestrian':
+        #                 continue
+                    
+        #             # ## Student implement ###
+        #             # TODO
+        #             # print(len(annotation))
+        #             # bbox = object['bboxes'][frame_number]
+        #             # print(object['bboxes'][frame_number])
+        #             # # Extract bounding box coordinates and convert them to Detectron2 format
+        #             bbox_np = object['bboxes'][frame_number]['position']
+        #             bbox_detectron2 = gen_boundingbox(bbox_np, object['bboxes'][frame_number]['rotation'])  # You may need to adjust the angle parameter
+
+        #             # # Add the object to the list
+        #             objs.append({
+        #                 "bbox": bbox_detectron2,
+        #                 "bbox_mode": BoxMode.XYXY_ABS,  # Assuming bounding box format is XYXY
+        #                 "category_id": 0  # Only one class ('vehicle') is assumed
+        #             })
+
+        #             # # Set bb_created to True to indicate that at least one bounding box is created for this frame
+        #             bb_created = True
+                    
+        #     if bb_created:
+        #         record["annotations"] = objs
+        #         dataset_dicts.append(record)
+
+        # return dataset_dicts
+
+    dataset_train_name = 'Bonus_train'
 
     DatasetCatalog.register(dataset_train_name,
-                            lambda: get_radar_dicts(folders_train))
-    MetadataCatalog.get(dataset_train_name).set(thing_classes=["vehicle"])
+                            lambda: get_radar_dicts())
+    dicts = get_radar_dicts()
+    # print(dicts[-2:])
+    MetadataCatalog.get(dataset_train_name).set(thing_classes=['car', 'scooter', 'scooters'])
 
-    DatasetCatalog.register(dataset_test_name,
-                            lambda: get_radar_dicts(folders_test))
-    MetadataCatalog.get(dataset_test_name).set(thing_classes=["vehicle"])
+    # print(len(DatasetCatalog.get(dataset_train_name)))
+    # print(MetadataCatalog.get(dataset_train_name).thing_classes)
 
     cfg_file = os.path.join('test', 'config', model_name + '.yaml')
     
@@ -206,7 +261,7 @@ def train(model_name, root_dir, dataset_mode, max_iter):
     cfg.OUTPUT_DIR = output_dir
     cfg.merge_from_file(cfg_file)
     cfg.DATASETS.TRAIN = (dataset_train_name,)
-    cfg.DATASETS.TEST = (dataset_test_name,)
+    # cfg.DATASETS.TEST = (dataset_test_name,)
     cfg.DATALOADER.NUM_WORKERS = 2
     cfg.SOLVER.IMS_PER_BATCH = 1
     # cfg.SOLVER.STEPS = (7000)
