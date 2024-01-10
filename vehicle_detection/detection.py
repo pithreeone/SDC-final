@@ -33,11 +33,11 @@ dt = 0.25
 cfg = get_cfg()
 # add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
 cfg.merge_from_file(os.path.join('test','config' , network + '.yaml'))
-cfg.MODEL.DEVICE = 'cuda'
+cfg.MODEL.DEVICE = 'cpu'
 cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/train_results/faster_rcnn_R_101_FPN_3x_good_and_bad_weather/model_9.pth'
 # cfg.MODEL.WEIGHTS = '/home/pithreeone/SDC-Repo/2023_final/vehicle_detection/weights/faster_rcnn_R_101_FPN_3x_good_and_bad_weather_radar.pth'
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1  # only has one class (vehicle)
-cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.2
+cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = 0.1
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[8, 16, 32, 64]]
 cfg.TEST.BATCH_SIZE_PER_IMAGE = 1  # or any other desired batch size
@@ -45,13 +45,14 @@ cfg.DATALOADER.NUM_WORKERS = 1  # or any other desired number of workers
 
 predictor = DefaultPredictor(cfg)
 
-image_folder_path = '/home/pithreeone/SDC-Repo/2023_final/data/Competition_Image'
+# image_folder_path = '/home/pithreeone/SDC-Repo/2023_final/data/Competition_Image'
+image_folder_path = '/home/pithreeone/SDC-Repo/2023_final/data/Bonus_Image'
 # image_folder_path = '/home/pithreeone/SDC-Repo/2023_final/data/mini_test/city_7_0/Navtech_Cartesian'
 image_files = [f for f in os.listdir(image_folder_path)]
 image_files.sort()
 # print(image_files)
 
-file_path = "output_comp_9.json"
+file_path = "output.json"
 data = []
 
 # for image_file in image_files:
@@ -112,6 +113,7 @@ for i in tqdm(range(len(image_files))):
     # v = Visualizer(img[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.7)
     # out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     # cv2.imshow("Prediction", out.get_image()[:, :, ::-1])
+    img = cv2.resize(img, (800,800))
     cv2.imshow("Prediction", img)
     cv2.waitKey(1)
     # print(image_file)

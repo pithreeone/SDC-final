@@ -35,7 +35,7 @@ parser.add_argument("--root_folder", help="root folder with radiate dataset",
                     type=str)
 
 parser.add_argument("--max_iter", help="Maximum number of iterations",
-                    default=1000,
+                    default=4000,
                     type=int)
 
 parser.add_argument("--resume", help="Whether to resume training or not",
@@ -59,6 +59,7 @@ class MyTrainer(DefaultTrainer):
     @classmethod
     def build_train_loader(cls, cfg):
         mapper = DatasetMapper(cfg, is_train=True, augmentations=[
+                                                                T.Resize((800, 800))
                                                                 #   T.RandomFlip(),
                                                                 #   T.RandomCrop("absolute", (700, 700)),
                                                                 #   T.RandomRotation(angle = [-45, 45]),
@@ -262,7 +263,7 @@ def train(model_name, root_dir, dataset_mode, max_iter):
     cfg.merge_from_file(cfg_file)
     cfg.DATASETS.TRAIN = (dataset_train_name,)
     # cfg.DATASETS.TEST = (dataset_test_name,)
-    cfg.DATALOADER.NUM_WORKERS = 2
+    cfg.DATALOADER.NUM_WORKERS = 1
     cfg.SOLVER.IMS_PER_BATCH = 1
     # cfg.SOLVER.STEPS = (7000)
     cfg.SOLVER.MAX_ITER = max_iter
